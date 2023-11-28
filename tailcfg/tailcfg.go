@@ -1876,6 +1876,10 @@ type MapResponse struct {
 	// download and whether the client is using it. A nil value means no change
 	// or nothing to report.
 	ClientVersion *ClientVersion `json:",omitempty"`
+
+	// MaxKeyDuration describes the MaxKeyDuration setting for the tailnet.
+	// If zero, the value is unchanged.
+	MaxKeyDuration time.Duration `json:",omitempty"`
 }
 
 // ClientVersion is information about the latest client version that's available
