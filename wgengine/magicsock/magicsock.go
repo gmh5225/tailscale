@@ -294,6 +294,12 @@ type Conn struct {
 	// onPortUpdate is called with the new port when magicsock rebinds to
 	// a new port.
 	onPortUpdate func(port uint16, network string)
+
+	// probeUDPLifetimeConfig represents the UDP lifetime probing config. A nil
+	// value indicates probing is disabled.
+	probeUDPLifetimeConfig *ProbeUDPLifetimeConfig
+	// at time of last SetNetworkMap
+	lastProbeUDPLifetimeConfig *ProbeUDPLifetimeConfig
 }
 
 // SetDebugLoggingEnabled controls whether spammy debug logging is enabled.
@@ -1844,6 +1850,21 @@ func (c *Conn) SilentDisco() bool {
 	return flags.heartbeatDisabled
 }
 
+func (c *Conn) SetProbeUDPLifetimeConfig(desired *ProbeUDPLifetimeConfig) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if desired.Equals(c.probeUDPLifetimeConfig) {
+		return
+	}
+	if desired != nil && !desired.Valid() {
+		return
+	}
+	c.probeUDPLifetimeConfig = desired
+	c.peerMap.forEachEndpoint(func(ep *endpoint) {
+		ep.setProbeUDPLifetimeConfig(desired)
+	})
+}
+
 // SetNetworkMap is called when the control client gets a new network
 // map from the control server. It must always be non-nil.
 //
@@ -1865,20 +1886,23 @@ func (c *Conn) SetNetworkMap(nm *netmap.NetworkMap) {
 	c.peers = curPeers
 
 	flags := c.debugFlagsLocked()
+	probeUDPLifetimeConfig := c.probeUDPLifetimeConfig
 	if addrs := nm.GetAddresses(); addrs.Len() > 0 {
 		c.firstAddrForTest = addrs.At(0).Addr()
 	} else {
 		c.firstAddrForTest = netip.Addr{}
 	}
 
-	if nodesEqual(priorPeers, curPeers) && c.lastFlags == flags {
+	if nodesEqual(priorPeers, curPeers) && c.lastFlags == flags && c.lastProbeUDPLifetimeConfig.Equals(probeUDPLifetimeConfig) {
 		// The rest of this function is all adjusting state for peers that have
 		// changed. But if the set of peers is equal and the debug flags (for
-		// silent disco) haven't changed, no need to do anything else.
+		// silent disco) haven't changed, and the udp lifetime probing config
+		// hasn't changed, there is no need to do anything else.
 		return
 	}
 
 	c.lastFlags = flags
+	c.lastProbeUDPLifetimeConfig = probeUDPLifetimeConfig
 
 	c.logf("[v1] magicsock: got updated network map; %d peers", len(nm.Peers))
 
@@ -1925,7 +1949,7 @@ func (c *Conn) SetNetworkMap(nm *netmap.NetworkMap) {
 			if epDisco := ep.disco.Load(); epDisco != nil {
 				oldDiscoKey = epDisco.key
 			}
-			ep.updateFromNode(n, flags.heartbeatDisabled)
+			ep.updateFromNode(n, flags.heartbeatDisabled, probeUDPLifetimeConfig)
 			c.peerMap.upsertEndpoint(ep, oldDiscoKey) // maybe update discokey mappings in peerMap
 			continue
 		}
@@ -1978,7 +2002,7 @@ func (c *Conn) SetNetworkMap(nm *netmap.NetworkMap) {
 			c.logEndpointCreated(n)
 		}
 
-		ep.updateFromNode(n, flags.heartbeatDisabled)
+		ep.updateFromNode(n, flags.heartbeatDisabled, probeUDPLifetimeConfig)
 		c.peerMap.upsertEndpoint(ep, key.DiscoPublic{})
 	}
 

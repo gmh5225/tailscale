@@ -4543,6 +4543,12 @@ func (b *LocalBackend) setNetMapLocked(nm *netmap.NetworkMap) {
 	}
 
 	b.MagicConn().SetSilentDisco(b.ControlKnobs().SilentDisco.Load())
+	// TODO(jwhited): make this a control knob
+	pulcfg := &magicsock.ProbeUDPLifetimeConfig{
+		Cliffs:             []time.Duration{time.Second * 10, time.Second * 30, time.Second * 60},
+		CycleCanStartEvery: time.Minute * 5,
+	}
+	b.MagicConn().SetProbeUDPLifetimeConfig(pulcfg)
 
 	b.setDebugLogsByCapabilityLocked(nm)
 
