@@ -2190,6 +2190,10 @@ const (
 	// netfilter management.
 	// This cannot be set simultaneously with NodeAttrLinuxMustUseIPTables.
 	NodeAttrLinuxMustUseNfTables NodeCapability = "linux-netfilter?v=nftables"
+
+	// NodeAttrSeamlessKeyRenewal makes clients enable beta functionality
+	// of renewing node keys without breaking connections.
+	NodeAttrSeamlessKeyRenewal NodeCapability = "seamless-key-renewal"
 )
 
 // SetDNSRequest is a request to add a DNS record.
