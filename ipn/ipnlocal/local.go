@@ -5805,7 +5805,7 @@ func (b *LocalBackend) AdvertiseRoute(ipp netip.Prefix) error {
 	return err
 }
 
-// seamlessRenewalEnabled returns true if seamless key renewals are enabled
+// seamlessRenewalEnabled reports whether seamless key renewals are enabled
 // (i.e. we saw our self node with the SeamlessKeyRenewal attr in a netmap).
 // This enables beta functionality of renewing node keys without breaking
 // connections.
