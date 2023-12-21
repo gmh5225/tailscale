@@ -1339,6 +1339,8 @@ const (
 	PeerCapabilityWakeOnLAN PeerCapability = "https://tailscale.com/cap/wake-on-lan"
 	// PeerCapabilityIngress grants the ability for a peer to send ingress traffic.
 	PeerCapabilityIngress PeerCapability = "https://tailscale.com/cap/ingress"
+	// PeerCapabilityTailfs grants the ability for a peer to access tailfs shares.
+	PeerCapabilityTailfs PeerCapability = "tailfs.com/tailfs"
 )
 
 // NodeCapMap is a map of capabilities to their optional values. It is valid for
@@ -2077,7 +2079,7 @@ const (
 	CapabilitySSHRuleIn          NodeCapability = "https://tailscale.com/cap/ssh-rule-in"           // some SSH rule reach this node
 	CapabilityDataPlaneAuditLogs NodeCapability = "https://tailscale.com/cap/data-plane-audit-logs" // feature enabled
 	CapabilityDebug              NodeCapability = "https://tailscale.com/cap/debug"                 // exposes debug endpoints over the PeerAPI
-	CapabilityHTTPS              NodeCapability = "https"                                           // https cert provisioning enabled on tailnet
+	CapabilityHTTPS              NodeCapability = "https"
 
 	// CapabilityBindToInterfaceByRoute changes how Darwin nodes create
 	// sockets (in the net/netns package). See that package for more
@@ -2190,6 +2192,9 @@ const (
 	// netfilter management.
 	// This cannot be set simultaneously with NodeAttrLinuxMustUseIPTables.
 	NodeAttrLinuxMustUseNfTables NodeCapability = "linux-netfilter?v=nftables"
+
+	// NodeAttrsTailfsSharingEnabled enables sharing via Tailfs.
+	NodeAttrsTailfsSharingEnabled NodeCapability = "tailfs:share"
 )
 
 // SetDNSRequest is a request to add a DNS record.
